@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import Login from './components/Login'
-import Typography from '@mui/material/Typography'
+import Auth from './components/Auth'
+import Home from './components/Home'
 
 function App() {
   return (
-    <Login>
-      <Typography variant='p'> App </Typography>
-    </Login>
+    <Auth>
+      <Home/>
+    </Auth>
   )
 }
 export default App
