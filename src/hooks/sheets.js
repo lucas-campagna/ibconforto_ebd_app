@@ -1,4 +1,6 @@
 const useSheets = (apiKey, userId)=>{
+    apiKey = apiKey || localStorage.getItem('apiKey');
+    userId = userId || localStorage.getItem('userId');
     if(!apiKey || !userId)
         return {}
     const url = `https://script.google.com/macros/s/${apiKey}/exec`

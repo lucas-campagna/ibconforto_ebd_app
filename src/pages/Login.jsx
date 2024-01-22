@@ -7,9 +7,9 @@ import TextField from '@mui/material/TextField'
 import { useSearchParams, useNavigate, useLocation, redirect } from 'react-router-dom'
 import useSheets from '../hooks/sheets'
 
-export const AuthContext = createContext()
+export const LoginContext = createContext()
 
-export default function Auth({children}) {
+export default function Login({children}) {
   const [state, setState] = useState({
     apiKey: localStorage.getItem('apiKey'),
     userId: localStorage.getItem('userId'),
@@ -104,13 +104,13 @@ export default function Auth({children}) {
     </Container>
   )
   return (
-    <AuthContext.Provider value={state}>
+    <LoginContext.Provider value={state}>
       {
         state.isLogged?
           children
         :
           <LoggedContent/>
       }
-    </AuthContext.Provider>
+    </LoginContext.Provider>
   )
 }
