@@ -1,5 +1,7 @@
 import Root, {rootLoader} from '../Root.jsx'
-import Login from '../pages/Login.jsx'
+import Login, {loginLoader, loginAction} from '../pages/Login.jsx'
+import Configuration, {loader as configurationLoader} from '../pages/Configuration.jsx'
+import Home, {homeLoader} from '../pages/Home.jsx'
 import { createBrowserRouter } from "react-router-dom";
 
 const router = createBrowserRouter([
@@ -10,13 +12,21 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Home/>
+        element: <Home/>,
+        loader: homeLoader
       },
       {
-        path: "/login",
-        element: <Login/>
-      },
+        path: "configuration",
+        element: <Configuration/>,
+        loader: configurationLoader
+      }
     ],
+  },
+  {
+    path: "/login",
+    element: <Login/>,
+    loader: loginLoader,
+    action: loginAction,
   },
 ]);
 

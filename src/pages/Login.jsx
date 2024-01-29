@@ -1,72 +1,31 @@
-import React, {useRef, useEffect, useState, createContext, useCallback} from 'react'
+import React, {useEffect, useState} from 'react'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
+import Stack from '@mui/material/Stack'
 import Container from '@mui/material/Container'
 import TextField from '@mui/material/TextField'
-import { useSearchParams, useNavigate, useLocation, redirect } from 'react-router-dom'
+import Slide from '@mui/material/Slide'
+import { useSearchParams, useNavigate, useLocation, useSubmit, redirect, Form, useActionData, useLoaderData } from 'react-router-dom'
 import useSheets from '../hooks/sheets'
+import LoadingDialog from '../components/LoadingDialog'
 
-export const LoginContext = createContext()
+const loadingDialogStates = {
+  idle: {},
+  logging: {level: 0,message: 'Validando...'},
+  entering: {level: 1,message: 'Entrando...'},
+  loginError:{level: 2,message:'Código inválido', loading: false}
+}
 
-export default function Login({children}) {
-  const [state, setState] = useState({
-    apiKey: localStorage.getItem('apiKey'),
-    userId: localStorage.getItem('userId'),
-    isLogged: false,
-    data: {}
-  });
-  const {isValidUser} = useSheets(state.apiKey, state.userId);
-  const [inputCode, setInputCode] = useState('');
-  const [searchParams, _] = useSearchParams();
+export default function Login() {
+  const submit = useSubmit();
+  const code = useLoaderData()
+  const stateFromAction = useActionData() || 'idle';
+  const [state, setState] = useState(stateFromAction);
+  if(loadingDialogStates[stateFromAction].level > loadingDialogStates[state].level) setState(stateFromAction)
+  const [inputCode, setInputCode] = useState(code);
   const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(()=>{
-    async function parseUrl(){
-      const code = searchParams.get('code')
-      if(code){
-        const [apiKey, userId] = code.split('.')
-        connectToSheet(apiKey)
-        login(userId)
-      }
-    }
-    parseUrl()
-  }, [location])
-
-  useEffect(()=>{
-    async function parseData(){
-      const response = await isValidUser()
-      if(response.status)
-        setState({...state, isLogged: response.message})
-    }
-    parseData()
-  },[state.apiKey, state.userId]);
-
-
-  function handleEnterCode(){
-    const [apiKey, userId] = inputCode.split('.')
-    if((state.apiKey !== apiKey || state.userId !== userId) && confirm("Você já possui uma conta vinculada a este aplicativo.\nDeseja desavincular a conta atual e vincular outra?")){
-      navigate(`/?code=${inputCode}`)
-    }
-  }
-
-  function connectToSheet(apiKey) {
-    if(state.apiKey !== apiKey){
-      setState({...state, apiKey})
-      localStorage.setItem('apiKey', apiKey)
-      navigate('/')
-    }
-  }
-  
-  function login(userId) {
-    if(state.userId !== userId){
-      setState({...state, userId})
-      localStorage.setItem('userId', userId)
-      navigate('/')
-    }
-  }
-  const LoggedContent = ()=>(
+  return (
     <Container
       maxWidth="sm"
       sx={{
@@ -77,40 +36,63 @@ export default function Login({children}) {
       <Box>
         <Typography variant='h4'>EBD IBConforto</Typography>
       </Box>
-      <Box
-        my='10%'
-        display='flex'
-        flexDirection='column'
-      >
-        <Typography my='3%' display='block' variant='p'>Olá, caro(a) professor(a)!</Typography>
+      <Box my='40px'>
+        {/* <Slide in={show} direction='right' timeout={400}> */}
+          <Typography my='3%' display='block' variant='p'>Olá, caro(a) professor(a)!</Typography>
+        {/* </Slide> */}
         <Typography my='3%' display='block' variant='p'>Este é um aplicativo para visa auxiliá-lo(a) no acompanhamento da presença da sua turma de EBD. Para começar, você precisa fornecer o código que lhe fora previamente fornecido</Typography>
-        <TextField
-          placeholder="Insira aqui o seu código"
-          autoFocus={true}
-          value={inputCode}
-          onChange={e=>setInputCode(e.target.value)}
-          onKeyDown={e=>e.key === 'Enter'? handleEnterCode() : null}
-        />
       </Box>
-      <Box>
-        <Button
-          variant='contained'
-          disabled={!inputCode}
-          onClick={handleEnterCode}
+      <Form
+        method='post'
+        onSubmit={e=>{
+          setState('logging')
+          submit(e.currentTarget)
+        }}
+      >
+        <Stack
+          flexDirection='column'
+          spacing={3}
+          alignItems='baseline'
         >
-          Ok
-        </Button>
-      </Box>
+          <TextField
+            placeholder="Insira aqui o seu código"
+            autoFocus={true}
+            value={inputCode}
+            onChange={e=>setInputCode(e.target.value)}
+            name='code'
+          />
+          <Button
+            variant='contained'
+            disabled={!inputCode}
+            type='submit'
+          >
+            Entrar
+          </Button>
+        </Stack>
+      </Form>
+      <LoadingDialog {...loadingDialogStates[state]} onClick={()=>navigate('/login')}/>
     </Container>
   )
-  return (
-    <LoginContext.Provider value={state}>
-      {
-        state.isLogged?
-          children
-        :
-          <LoggedContent/>
-      }
-    </LoginContext.Provider>
-  )
+}
+
+export function loginLoader({request}){
+  const url = new URL(request.url);
+  const code = url.searchParams.get("code");
+  const sheets = useSheets()
+  return sheets ? redirect('/') : code
+}
+
+export async function loginAction({request}){
+  const formData = await request.formData()
+  try{
+    const code = formData.get('code')
+    const [apiKey, userId] = code.split('.')
+    const sheets = await useSheets(apiKey, userId)
+    if(!sheets)
+      return 'loginError'
+  }
+  catch{
+    return 'idle'
+  }
+  return 'entering'
 }
