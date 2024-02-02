@@ -10,7 +10,6 @@ export default function Header() {
     const navigate = useNavigate();
 
     function handleSwapConfigs(){
-        console.log('handleSwapConfigs')
         navigate(
             location.pathname == '/configuration' ?
             -1

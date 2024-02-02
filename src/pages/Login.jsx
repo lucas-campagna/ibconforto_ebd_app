@@ -12,9 +12,9 @@ import LoadingDialog from '../components/LoadingDialog'
 
 const loadingDialogStates = {
   idle: {},
-  logging: {level: 0,message: 'Validando...'},
-  entering: {level: 1,message: 'Entrando...'},
-  loginError:{level: 2,message:'Código inválido', loading: false}
+  logging: {message: 'Validando...'},
+  entering: {message: 'Entrando...'},
+  loginError:{message:'Código inválido', loading: false}
 }
 
 export default function Login() {
@@ -22,9 +22,13 @@ export default function Login() {
   const code = useLoaderData()
   const stateFromAction = useActionData() || 'idle';
   const [state, setState] = useState(stateFromAction);
-  if(loadingDialogStates[stateFromAction].level > loadingDialogStates[state].level) setState(stateFromAction)
+  // if(loadingDialogStates[stateFromAction].level > loadingDialogStates[state].level) setState(stateFromAction)
   const [inputCode, setInputCode] = useState(code);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
+  useEffect(()=>{
+    if(stateFromAction != state)
+      setState(stateFromAction)
+  },[stateFromAction]);
   return (
     <Container
       maxWidth="sm"
@@ -57,7 +61,7 @@ export default function Login() {
           <TextField
             placeholder="Insira aqui o seu código"
             autoFocus={true}
-            value={inputCode}
+            value={inputCode || ''}
             onChange={e=>setInputCode(e.target.value)}
             name='code'
           />
@@ -70,7 +74,7 @@ export default function Login() {
           </Button>
         </Stack>
       </Form>
-      <LoadingDialog {...loadingDialogStates[state]} onClick={()=>navigate('/login')}/>
+      <LoadingDialog {...loadingDialogStates[state]} onClick={()=>setState('idle')}/>
     </Container>
   )
 }

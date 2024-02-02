@@ -17,7 +17,7 @@ export default function LoadingDialog({message, loading, onClick}) {
           alignItems='center'
           spacing={1}
           sx={{
-            m:1
+            m:2
           }}
         >
           <Typography>{message}</Typography>

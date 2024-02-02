@@ -1,10 +1,13 @@
 import React from 'react'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import { Link } from "react-router-dom";
+import Typography from '@mui/material/Typography'
+import { useNavigate } from "react-router-dom";
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 
 export default function HomeFooter({prev, next, hasNext, current}) {
-    
+    const navigate = useNavigate();
     return (
         <Box
             sx={{
@@ -24,29 +27,23 @@ export default function HomeFooter({prev, next, hasNext, current}) {
                 sx={{
                     p:'0 6px',
                     display:'flex',
-                    justifyContent:'space-between',
+                    justifyContent:'space-around',
                     alignItems: 'center',
                     width:'100%',
                     maxWidth:512,
                 }}
             >
-                <DateButton date={prev}/>
-                <Button disabled={true}>{formatDate(current)}</Button>
-                <DateButton date={next} disabled={!hasNext}/>
+                <Button variant='contained' disabled={!prev} onClick={()=>navigate(`?date=${prev}`)}>
+                    <NavigateBeforeIcon />
+                </Button>
+                <Typography>{formatDate(current)}</Typography>
+                <Button variant='contained' disabled={!hasNext} onClick={()=>navigate(`?date=${next}`)}>
+                    <NavigateNextIcon/>
+                </Button>
             </Box>
         </Box>
     )
 }
-
-const DateButton = ({date, disabled, ...props}) => date?
-    (
-        disabled?
-        <Button disabled={disabled} {...props}>{formatDate(date)}</Button>
-        :
-        <Link to={`?date=${date}`}><Button {...props}>{formatDate(date)}</Button></Link>
-    )
-    :
-    <Button/>
 
 const formatDate = date => {const fDate = dateFromStr(date); return `${padZeros(fDate.getDate())}/${padZeros(fDate.getMonth()+1)}/${padZeros(fDate.getFullYear())}`};
 const dateFromStr = date => new Date(date);
