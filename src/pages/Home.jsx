@@ -2,10 +2,8 @@ import React, { useMemo, useState, useCallback, useEffect } from 'react'
 import { useLoaderData, useRevalidator } from 'react-router'
 import { useSearchParams, redirect } from 'react-router-dom'
 import HomeFooter from '../components/HomeFooter'
-import Button from '@mui/material/Button'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
-import Checkbox from '@mui/material/Checkbox'
 import Fab from '@mui/material/Fab'
 import Typography from '@mui/material/Typography'
 import SaveIcon from '@mui/icons-material/Save';
@@ -13,6 +11,8 @@ import Grow from '@mui/material/Grow';
 
 import LoadingDialog from '../components/LoadingDialog'
 import useSheets from '../hooks/sheets'
+import CheckButtom from '../components/CheckButtom'
+
 
 export default function Home() {
   const revalidator = useRevalidator()
@@ -84,27 +84,13 @@ export default function Home() {
       {
         history?
         Object.entries(history).map(
-          ([name, presence],i)=>
-          <Button
-            sx={{
-              display:'flex',
-              justifyContent:'space-between',
-            }}
-            key={i}
-            variant="contained"
-            onClick={e=>handleClickName(name)}
-          >
-            <Typography noWrap={true}>{name}</Typography>
-            <Checkbox
-              sx={{
-                color:'white',
-                '&.Mui-checked':{
-                  color: 'white',
-                }
-              }}
-              checked={presence}
+          ([name, checked],i)=>
+            <CheckButtom
+              key={i}
+              name={name}
+              checked={checked}
+              onClick={handleClickName}
             />
-          </Button>
         )
         :
         <></>
