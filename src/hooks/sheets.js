@@ -23,6 +23,7 @@ const useSheets = (apiKey, userId)=>{
         ]),
         apiKey,
         userId,
+        invalidateCache,
     }
 }
 

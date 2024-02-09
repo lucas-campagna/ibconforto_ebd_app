@@ -1,47 +1,47 @@
 import React from 'react'
-import Box from '@mui/material/Box'
+import Stack from '@mui/material/Stack'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import { useNavigate } from "react-router-dom";
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 
-export default function HomeFooter({prev, next, hasNext, current}) {
-    const navigate = useNavigate();
+export default function HomeFooter({prev, next, current, onPrevClick, onNextClick}) {
+    const hasPrev = !prev
+    const hasNext = !next
     return (
-        <Box
+        <Stack
+            direction='row'
+            justifyContent='center'
             sx={{
                 boxShadow: 'rgba(0, 0, 0, 0.1) 0px -1px 2px 0px',
                 position:'sticky',
-                bottom: -1,
-                left:0,
+                bottom:0,
+                width:'100vw',
                 height: 48,
-                zIndex: 2,
+                zIndex: 20,
                 background:'white',
-                width:'100%',
-                display:'flex',
-                justifyContent:'center'
             }}
             >
-            <Box
+            <Stack
+                justifyContent='space-around'
+                alignItems='center'
+                direction='row'
                 sx={{
                     p:'0 6px',
-                    display:'flex',
-                    justifyContent:'space-around',
-                    alignItems: 'center',
                     width:'100%',
                     maxWidth:512,
                 }}
             >
-                <Button variant='contained' disabled={!prev} onClick={()=>navigate(`?date=${prev}`)}>
+                <Button variant='contained' disabled={hasPrev} onClick={onPrevClick}>
                     <NavigateBeforeIcon />
                 </Button>
                 <Typography>{formatDate(current)}</Typography>
-                <Button variant='contained' disabled={!hasNext} onClick={()=>navigate(`?date=${next}`)}>
+                <Button variant='contained' disabled={hasNext} onClick={onNextClick}>
                     <NavigateNextIcon/>
                 </Button>
-            </Box>
-        </Box>
+            </Stack>
+        </Stack>
     )
 }
 
