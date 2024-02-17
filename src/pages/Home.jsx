@@ -15,7 +15,6 @@ import LoadingDialog from '../components/LoadingDialog'
 import HomeFooter from '../components/HomeFooter'
 import SlideTransition from '../components/SlideTransition'
 import AttendanceList from '../components/AttendanceList'
-import { Button } from '@mui/material'
 
 export default function Home() {
   const location = useLocation()

@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from 'react';
+import Stack from '@mui/material/Stack'
+import Dialog from '@mui/material/Dialog'
+import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
+
 
 const InstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [show, setShow] = useState(true);
+  const [contentShow, setContentShow] = useState(true);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (event) => {
       event.preventDefault();
-    //   setDeferredPrompt(event);
-      console.log('handleBeforeInstallPrompt')
+      setDeferredPrompt(event);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -16,41 +22,63 @@ const InstallPrompt = () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
-  console.log('InstallPrompt')
 
+  function handleCancel(){
+    setShow(false);
+  }
 
-//   const showInstallButton = () => {
-//     if (deferredPrompt) {
-//       // Display an install button or other UI element
-//       // e.g., you can show a button that calls deferredPrompt.prompt() when clicked
-//       const installButton = document.getElementById('install-button');
+  function handleInstall(){
+    // Trigger the install prompt
+    deferredPrompt.prompt();
+    setContentShow(false)
 
-//       installButton.addEventListener('click', () => {
-//         // Trigger the install prompt
-//         deferredPrompt.prompt();
+    // Wait for the user to respond to the prompt
+    deferredPrompt.userChoice.then((choiceResult) => {
+      setShow(false);
+      if (choiceResult.outcome === 'accepted') {
+        navigator.serviceWorker.register('/sw.js')
+      }
 
-//         // Wait for the user to respond to the prompt
-//         deferredPrompt.userChoice.then((choiceResult) => {
-//           if (choiceResult.outcome === 'accepted') {
-//             console.log('User accepted the install prompt');
-//           } else {
-//             console.log('User dismissed the install prompt');
-//           }
-
-//           // Reset the deferredPrompt variable
-//           setDeferredPrompt(null);
-//         });
-//       });
-//     }
-//   };
+      // Reset the deferredPrompt variable
+      setDeferredPrompt(null);
+    });
+  }
 
   return (
-    <div>
-      {/* <button id="install-button" onClick={showInstallButton}>
-        Install App
-      </button> */}
-    </div>
+    <>
+    {
+      deferredPrompt === null ?
+        (<></>)
+      : 
+        (
+        <Dialog open={show}>
+          {
+            contentShow ?
+            <Stack
+              direction='column'
+              m={2}
+              spacing={2}
+            >
+              <Typography maxWidth={300}>
+                Instale o aplicativo para melhorar sua experiência
+              </Typography>
+              <Stack
+                direction='row'
+                justifyContent='center'
+                spacing={2}
+              >
+                <Button size='small' onClick={handleCancel}>Não instalar</Button>
+                <Button onClick={handleInstall}>Instalar</Button>
+              </Stack>
+            </Stack>
+            :
+            <></>
+          }
+        </Dialog>
+      )
+    }
+    </>
   );
-};
+}
 
 export default InstallPrompt;

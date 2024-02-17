@@ -27,7 +27,7 @@ export const theme = createTheme({
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {/* <InstallPrompt/> */}
+    <InstallPrompt/>
     <CssBaseline />
     <ThemeProvider theme={theme}>
       <RouterProvider router={router} />
