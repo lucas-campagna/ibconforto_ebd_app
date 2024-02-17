@@ -40,7 +40,7 @@ export default function AttendanceList({list, onChanged}){
         :
         <></>
       }
-      <Button variant='outlined' sx={{height:'54px'}}><PlusOneIcon/></Button>
+      {/* <Button variant='outlined' sx={{height:'54px'}}><PlusOneIcon/></Button> */}
       </Stack>
     )
   }
