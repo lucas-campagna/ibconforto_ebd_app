@@ -1,11 +1,17 @@
 module.exports = {
-	globDirectory: 'public/',
+	globDirectory: 'dist/',
 	globPatterns: [
-		'**/*.{css,js,woff2,woff,png,html}'
+		'**/*.{json,css,js,woff2,woff,png,html}',
 	],
-	swDest: 'public/sw.js',
-	ignoreURLParametersMatching: [
-		/^utm_/,
-		/^fbclid$/
-	]
+	swDest: 'dist/sw.js',
+	runtimeCaching:[
+		{urlPattern: '/login', handler: "CacheFirst"},
+		{urlPattern: '/configuration', handler: "CacheFirst"},
+		{urlPattern: '/?date=.+', handler: "CacheFirst"},
+		{
+			urlPattern: /.*\.(json|css|js|woff2|woff|png|html)/,
+  			handler: "CacheFirst",
+		},
+	],
+	ignoreURLParametersMatching: []
 };

@@ -4,31 +4,37 @@ import Configuration, {loader as configurationLoader} from '../pages/Configurati
 import Home, {homeLoader} from '../pages/Home.jsx'
 import Error from '../pages/error.jsx'
 import { createBrowserRouter } from "react-router-dom";
+import {baseurl} from "../data.json"
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <Root />,
-    loader: rootLoader,
-    errorElement: <Error/>,
+    path: baseurl,
     children: [
       {
-        index: true,
-        element: <Home/>,
-        loader: homeLoader
+        path: "",
+        element: <Root />,
+        loader: rootLoader,
+        errorElement: <Error/>,
+        children: [
+          {
+            index: true,
+            element: <Home/>,
+            loader: homeLoader
+          },
+          {
+            path: "configuration",
+            element: <Configuration/>,
+            loader: configurationLoader
+          }
+        ],
       },
       {
-        path: "configuration",
-        element: <Configuration/>,
-        loader: configurationLoader
-      }
-    ],
-  },
-  {
-    path: "/login",
-    element: <Login/>,
-    loader: loginLoader,
-    action: loginAction,
+        path: "login",
+        element: <Login/>,
+        loader: loginLoader,
+        action: loginAction,
+      },
+    ]
   },
 ]);
 

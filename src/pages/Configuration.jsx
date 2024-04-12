@@ -1,5 +1,5 @@
 import React, {useState} from 'react'
-import { useLoaderData } from 'react-router'
+import { useLoaderData, useNavigate } from 'react-router'
 import useSheets from '../hooks/sheets'
 import ShareIcon from '@mui/icons-material/Share';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -8,10 +8,12 @@ import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Dialog from '@mui/material/Dialog'
+import {baseurl} from '../data.json'
 
 export default function Configuration() {
   const [showDialog, setShowDialog] = useState(false)
   const {name, className, code, theme} = useLoaderData()
+  const navigate = useNavigate()
   return (
     <Stack
       alignItems='stretch'
@@ -82,7 +84,7 @@ export default function Configuration() {
             <Typography>Tem certeza que deseja sair?</Typography>
             <Stack direction='row' justifyContent='center'>
               <Button onClick={()=>setShowDialog(false)}>Cancelar</Button>
-              <Button sx={{color:'red'}} onClick={()=>{localStorage.clear();window.location.reload()}}>Ok</Button>
+              <Button sx={{color:'red'}} onClick={()=>{localStorage.clear();navigate(baseurl + '/login')}}>Ok</Button>
             </Stack>
           </Stack>
         </Dialog>

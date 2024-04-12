@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import IconButton from '@mui/material/IconButton'
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ClearIcon from '@mui/icons-material/Clear';
 import { useLocation, useNavigate } from 'react-router-dom';
+import {baseurl} from '../data.json'
 
 export default function Header({title}) {
     const location = useLocation();
     const navigate = useNavigate();
-    const isConfigurationPage = location.pathname == '/configuration'
+    const isConfigurationPage = location.pathname.endsWith('/configuration')
 
     function handleSwapConfigs(){
         navigate(
-            isConfigurationPage ? -1 : '/configuration'
+            isConfigurationPage ? -1 : baseurl+'/configuration'
         )
     }
 
@@ -56,7 +57,7 @@ export default function Header({title}) {
                 </IconButton>
                 <Box>{title}</Box>
                 <Stack sx={{m:'auto 12px',p:0, display:'flex',justifyContent:'center',flexDirection:'column'}}>
-                    <img style={{width:'24px', height:'24px'}} src="imgs/icon-48x48.png"/>
+                    <img style={{width:'24px', height:'24px'}} src="/assets/imgs/icon-48x48.png"/>
                 </Stack>
             </Stack>
         </Stack>

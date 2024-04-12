@@ -4,6 +4,7 @@ import { redirect } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
 import Header from './components/Header'
+import {baseurl} from "./data.json"
 
 function Root() {
   const {apiKey, userId, theme, ...sheets} = useLoaderData()
@@ -22,17 +23,17 @@ export async function loader({request}) {
   const sheets = useSheets()
   if(!sheets){
     const url = new URL(request.url)
-    return url.pathname === '/login' ? {} : redirect('/login')
+    return url.pathname === '/login' ? {} : redirect(baseurl+'/login')
   }
   const {message, status} = await sheets.isValidUser()
   if(!status || !message){
     const url = new URL(request.url)
-    return url.pathname === '/login' ? {} : redirect('/login')
+    return url.pathname === '/login' ? {} : redirect(baseurl+'/login')
   }
   const userInfoResponse = await sheets.getUserInfo()
   if(!userInfoResponse.status){
     const url = new URL(request.url)
-    return url.pathname === '/login' ? {} : redirect('/login')
+    return url.pathname === '/login' ? {} : redirect(baseurl+'/login')
   }
   const {group, id: userId, name, theme} = userInfoResponse.message
   return {group, id: userId, name, theme, ...sheets}

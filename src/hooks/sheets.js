@@ -63,6 +63,7 @@ function joinObject(obj, parentKey = '') {
 
 // var cache = {}
 // const invalidateCache = ()=>cache={}
+// const saveCache = (key, val)=>cache[key]=val
 const invalidateCache = ()=>localStorage.setItem('cache','{}')
 // invalidateCache()
 
@@ -78,7 +79,8 @@ const fetchCached = async (url, args)=>{
         localStorage.setItem('cache',JSON.stringify(cache))
         return response;
     } catch(err){
-        localStorage.clear()
+        // cache = {}
+        localStorage.removeItem('cache')
         return false
     }
 }

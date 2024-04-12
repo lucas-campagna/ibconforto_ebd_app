@@ -9,6 +9,7 @@ import Slide from '@mui/material/Slide'
 import { useSearchParams, useNavigate, useLocation, useSubmit, redirect, Form, useActionData, useLoaderData } from 'react-router-dom'
 import useSheets from '../hooks/sheets'
 import LoadingDialog from '../components/LoadingDialog'
+import {baseurl} from "../data.json"
 
 const loadingDialogStates = {
   idle: {},
@@ -83,7 +84,7 @@ export function loginLoader({request}){
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const sheets = useSheets()
-  return sheets ? redirect('/') : code
+  return sheets ? redirect(baseurl+'/') : code
 }
 
 export async function loginAction({request}){

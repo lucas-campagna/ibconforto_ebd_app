@@ -16,6 +16,8 @@ import HomeFooter from '../components/HomeFooter'
 import SlideTransition from '../components/SlideTransition'
 import AttendanceList from '../components/AttendanceList'
 
+import {baseurl} from "../data.json"
+
 export default function Home() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -150,7 +152,7 @@ export default function Home() {
 
 export async function homeLoader() { 
   const sheet = useSheets()
-  if(!sheet) return redirect('/login')
+  if(!sheet) return redirect(baseurl+'/login')
   // caching getUserInfo
   sheet.getUserInfo()
   const {message, status} = await sheet.getHistory()

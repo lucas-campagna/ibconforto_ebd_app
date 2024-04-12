@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "sw": "workbox generateSW workbox-config.cjs",
-    "build": "vite build",
+    "build": "vite build;workbox generateSW workbox-config.cjs",
+    "deploy": "cp -r dist/* ../lucas-campagna.github.io/apps/ibcebd/; cd ../lucas-campagna.github.io/apps/ibcebd/; find -type f -exec sed -i 's;assets/;apps/ibcebd/assets/;g' {} \\;",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
@@ -16,6 +16,7 @@
     "@fontsource/roboto": "^5.0.8",
     "@mui/icons-material": "^5.15.6",
     "@mui/material": "^5.15.3",
+    "dotenv": "^16.4.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router": "^6.21.1",
