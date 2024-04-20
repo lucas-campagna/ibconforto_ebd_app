@@ -56,7 +56,7 @@ export default function Header({title}) {
                 </IconButton>
                 <Box>{title}</Box>
                 <Stack sx={{m:'auto 12px',p:0, display:'flex',justifyContent:'center',flexDirection:'column'}}>
-                    <img style={{width:'24px', height:'24px'}} src="imgs/icon-48x48.png"/>
+                    <img style={{width:'24px', height:'24px'}} src="assets/imgs/icon-48x48.png"/>
                 </Stack>
             </Stack>
         </Stack>
