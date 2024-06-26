@@ -160,6 +160,7 @@ export async function homeLoader() {
       saveHistory: sheet.setHistory,
       invalidateCache: sheet.invalidateCache,
     }
+  redirect('/login');
   return {}
 }
 
