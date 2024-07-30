@@ -6,7 +6,7 @@ import Stack from '@mui/material/Stack'
 import Header from './components/Header'
 
 function Root() {
-  const {apiKey, userId, theme, ...sheets} = useLoaderData()
+  const {theme} = useLoaderData()
   return (
     <Stack
       flexDirection='column'
@@ -20,22 +20,23 @@ function Root() {
 
 export async function loader({request}) { 
   const sheets = useSheets()
-  if(!sheets){
-    const url = new URL(request.url)
-    return url.pathname === '/login' ? {} : redirect('/login')
+  if(!sheets || !await sheets.isValidUser()){
+    return redirect('/login')
   }
-  const {message, status} = await sheets.isValidUser()
-  if(!status || !message){
-    const url = new URL(request.url)
-    return url.pathname === '/login' ? {} : redirect('/login')
-  }
-  const userInfoResponse = await sheets.getUserInfo()
-  if(!userInfoResponse.status){
-    const url = new URL(request.url)
-    return url.pathname === '/login' ? {} : redirect('/login')
-  }
-  const {group, id: userId, name, theme} = userInfoResponse.message
-  return {group, id: userId, name, theme, ...sheets}
+  const user = await sheets.teacher.get()
+  return user
+  // const {message, status} = await sheets.isValidUser()
+  // if(!status || !message){
+  //   const url = new URL(request.url)
+  //   return url.pathname === '/login' ? {} : redirect('/login')
+  // }
+  // const userInfoResponse = await sheets.getUserInfo()
+  // if(!userInfoResponse.status){
+  //   const url = new URL(request.url)
+  //   return url.pathname === '/login' ? {} : redirect('/login')
+  // }
+  // const {group, id: userId, name, theme} = userInfoResponse.message
+  // return {group, id: userId, name, theme, ...sheets}
 }
 
 export default Root

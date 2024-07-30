@@ -11,7 +11,7 @@ export default function CheckButtom({name, checked, onClick}) {
         justifyContent:'space-between',
       }}
       variant={checked?'contained':'outlined'}
-      onClick={e=>onClick(name)}
+      onClick={onClick}
       >
       <Typography noWrap={true}>{name}</Typography>
       <Checkbox

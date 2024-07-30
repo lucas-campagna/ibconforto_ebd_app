@@ -7,9 +7,8 @@ import PlusOneIcon from '@mui/icons-material/PlusOne';
 export default function AttendanceList({list, onChanged}){
     onChanged = onChanged || (()=>null)
     const [modifiedList, setModifiedList] = useState(list);
-    function handleNameClick(name){
-        const newList = {...modifiedList}
-        newList[name] = !newList[name]
+    function handleNameClick(i){
+        const newList = [...modifiedList.slice(0, i), {name: modifiedList[i].name, status: !modifiedList[i].status}, ...modifiedList.slice(i+1)]
         onChanged(newList)
         setModifiedList(newList)
     }
@@ -27,18 +26,15 @@ export default function AttendanceList({list, onChanged}){
         }}
       >
       {
-        modifiedList?
-        Object.entries(modifiedList).map(
-          ([name, present],i)=>
+        modifiedList.map(
+          ({name, status},i)=>
             <CheckButtom
               key={i}
               name={name}
-              checked={present}
-              onClick={handleNameClick}
+              checked={status}
+              onClick={() => handleNameClick(i)}
             />
         )
-        :
-        <></>
       }
       {/* <Button variant='outlined' sx={{height:'54px'}}><PlusOneIcon/></Button> */}
       </Stack>

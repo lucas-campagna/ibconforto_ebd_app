@@ -31,7 +31,7 @@ export default function Home() {
   const [currentDate, setCurrentDate] = useState(currentDateFromParams in validDates ? currentDateFromParams : validDates.at(-1))
   const [lastDate, setLastDate] = useState(currentDate)
   const [currentAttendanceList, setCurrentAttendanceList] = useState(historyFromServer[currentDate])
-
+  
   const {next, prev} = useMemo(()=>{
     const prev = validDates.filter(d=>d < currentDate).at(-1)
     const next = validDates.filter(d=>d > currentDate).at(0)
@@ -70,7 +70,7 @@ export default function Home() {
     setDialogMessage('Atualizando...')
     setButtonSaveVisible(false)
     setButtonSyncVisible(false)
-    invalidateCache()
+    setDialogMessage('')
     revalidator.revalidate()
   }
 
@@ -149,19 +149,25 @@ export default function Home() {
 }
 
 export async function homeLoader() { 
-  const sheet = useSheets()
-  if(!sheet) return redirect('/login')
-  // caching getUserInfo
-  sheet.getUserInfo()
-  const {message, status} = await sheet.getHistory()
-  if(status)
+  const sheets = useSheets()
+  if(!sheets) {
+    return redirect('/login')
+  }
+  console.log('Fetching data...')
+  await sheets.fetchAll();
+  const attendances = await sheets.attendance.get()
+  const students = await sheets.student.get()
+  const dates = await sheets.date.get()
+  if(attendances && students && dates) {
+    // TODO: filtrar data até o dia atual aqui
     return {
-      history: message,
-      saveHistory: sheet.setHistory,
-      invalidateCache: sheet.invalidateCache,
+      history: Object.fromEntries(dates.map(date => [date, students.map(({name}) => ({name, status: attendances.reduce((o, {date: d, name: n}) => o || n === name && d === date, false)}))])),
+      saveHistory: sheets.attendance.add,
+      invalidateCache: () => {sheets.attendance.invalidate(); return sheets.attendance.get()},
     }
-  redirect('/login');
-  return {}
+  }
+  sheets.logout()
+  return redirect('/login');
 }
 
 const ButtonSave = ({visible, ...props})=>(
