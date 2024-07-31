@@ -4,7 +4,7 @@ import CheckButtom from '../components/CheckButtom'
 import Button from '@mui/material/Button'
 import PlusOneIcon from '@mui/icons-material/PlusOne';
 
-export default function AttendanceList({list, onChanged}){
+export default function AttendanceList({list, onChanged, canEdit}){
     onChanged = onChanged || (()=>null)
     const [modifiedList, setModifiedList] = useState(list);
     function handleNameClick(i){
@@ -33,6 +33,7 @@ export default function AttendanceList({list, onChanged}){
               name={name}
               checked={status}
               onClick={() => handleNameClick(i)}
+              canEdit={canEdit}
             />
         )
       }

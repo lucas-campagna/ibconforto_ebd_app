@@ -87,6 +87,7 @@ export default function Home() {
         key={lastDate}
         list={historyFromServer[lastDate]}
         onChanged={handleOnChangeAttendanceList}
+        canEdit={lastDate === today}
       />
     )},[lastDate, historyFromServer[lastDate]])
   const HistoryListCurrentDate = useMemo(()=>{
@@ -95,6 +96,7 @@ export default function Home() {
         key={currentDate}
         list={historyFromServer[currentDate]}
         onChanged={handleOnChangeAttendanceList}
+        canEdit={currentDate === today}
       />
     )},[currentDate, historyFromServer[currentDate]])
   return (
