@@ -22,12 +22,12 @@ export default function Home() {
   const revalidator = useRevalidator()
   const [params, _] = useSearchParams()
   const {history: historyFromServer, saveHistory, invalidateCache} = useLoaderData()
-  const dateNow = useMemo(()=>dateToStr(Date.now()),[])
-  const currentDateFromParams = dateToStr(new Date(params.get('date') || dateNow));
+  const today = dateToLocal(Date.now())
+  const currentDateFromParams = dateToISO(params.get('date') || today);
   const [buttonSaveVisible, setButtonSaveVisible] = useState(false);
   const [buttonSyncVisible, setButtonSyncVisible] = useState(true);
   const [dialogMessage, setDialogMessage] = useState('');
-  const validDates = useMemo(()=>Object.keys(historyFromServer).filter(date=>date <= dateNow),[historyFromServer]);
+  const validDates = useMemo(()=>Object.keys(historyFromServer).filter(date=>dateToISO(date) <= dateToISO(today)),[historyFromServer]);
   const [currentDate, setCurrentDate] = useState(currentDateFromParams in validDates ? currentDateFromParams : validDates.at(-1))
   const [lastDate, setLastDate] = useState(currentDate)
   const [currentAttendanceList, setCurrentAttendanceList] = useState(historyFromServer[currentDate])
@@ -57,12 +57,12 @@ export default function Home() {
   }
 
   async function handleOnSave(){
-    const newServerAttendanceList = {}
-    newServerAttendanceList[currentDate] = currentAttendanceList;
     setDialogMessage('Salvando...')
     setButtonSaveVisible(false)
     setButtonSyncVisible(false)
-    const {message, status} = await saveHistory(newServerAttendanceList)
+    await saveHistory(currentAttendanceList.filter(({status},i) => historyFromServer[currentDate][i].status != status))
+    setDialogMessage('')
+    setButtonSyncVisible(true)
     revalidator.revalidate()
   }
 
@@ -70,7 +70,7 @@ export default function Home() {
     setDialogMessage('Atualizando...')
     setButtonSaveVisible(false)
     setButtonSyncVisible(false)
-    setDialogMessage('')
+    invalidateCache()
     revalidator.revalidate()
   }
 
@@ -155,8 +155,7 @@ export async function homeLoader() {
   if(!sheets) {
     return redirect('/login')
   }
-  console.log('Fetching data...')
-  await sheets.fetchAll();
+  sheets.fetchAll();
   const attendances = await sheets.attendance.get()
   const students = await sheets.student.get()
   const dates = await sheets.date.get()
@@ -164,8 +163,19 @@ export async function homeLoader() {
     // TODO: filtrar data até o dia atual aqui
     return {
       history: Object.fromEntries(dates.map(date => [date, students.map(({name}) => ({name, status: attendances.reduce((o, {date: d, name: n}) => o || n === name && d === date, false)}))])),
-      saveHistory: sheets.attendance.add,
-      invalidateCache: () => {sheets.attendance.invalidate(); return sheets.attendance.get()},
+      saveHistory: async newStatus => {
+        try{
+          await sheets.attendance.call([
+            ...newStatus.filter(({status}) => status).map(({name}) => ({add: {name}})),
+            ...newStatus.filter(({status}) => !status).map(({name}) => ({rm: {name}})),
+        ]);
+        } catch(error) {
+          console.log(error)
+          sheets.attendance.invalidate()
+          await sheets.attendance.get()
+        }
+      },
+      invalidateCache: sheets.attendance.invalidate,
     }
   }
   sheets.logout()
@@ -207,7 +217,23 @@ const ButtonSync = ({visible, ...props})=>(
   </Slide>
 )
 
+const dateToLocal = date => {
+  try {
+    return new Date(date).toLocaleDateString('pt-BR')
+  } catch {
+    return `Formato inválido de data=${date}`
+  }
+}
+const dateToISO = date => {
+  try {
+    const [day, month, year] = date.split('/');
+    return new Date(year, month-1, day).toISOString();
+  } catch {
+    return `Formato de data inválido ${date}`
+  }
+}
+
 const deepCmp = (obj1,obj2) => JSON.stringify(obj1) === JSON.stringify(obj2)
-const dateToStr = date => {const fDate = dateFromStr(date); return `${padZeros(fDate.getFullYear())}/${padZeros(fDate.getMonth()+1)}/${padZeros(fDate.getDate())}`};
-const dateFromStr = date => new Date(date);
+// const dateToStr = date => new Date(date).toLocaleDateString('pt-BR');
+const dateFromStr = date => {const [day, month, year] = date.split('/'); return new Date(year, month-1, day).toISOString();};
 const padZeros = (s,n=2) => String(s).padStart(n,'0')

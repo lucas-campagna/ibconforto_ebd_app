@@ -36,7 +36,7 @@ export default function HomeFooter({prev, next, current, onPrevClick, onNextClic
                 <Button variant='contained' disabled={hasPrev} onClick={onPrevClick}>
                     <NavigateBeforeIcon />
                 </Button>
-                <Typography>{formatDate(current)}</Typography>
+                <Typography>{current}</Typography>
                 <Button variant='contained' disabled={hasNext} onClick={onNextClick}>
                     <NavigateNextIcon/>
                 </Button>
@@ -44,7 +44,3 @@ export default function HomeFooter({prev, next, current, onPrevClick, onNextClic
         </Stack>
     )
 }
-
-const formatDate = date => {const fDate = dateFromStr(date); return `${padZeros(fDate.getDate())}/${padZeros(fDate.getMonth()+1)}/${padZeros(fDate.getFullYear())}`};
-const dateFromStr = date => new Date(date);
-const padZeros = (s,n=2) => String(s).padStart(n,'0')

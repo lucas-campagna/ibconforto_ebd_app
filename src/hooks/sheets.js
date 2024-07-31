@@ -1,3 +1,5 @@
+import { Construction } from "@mui/icons-material";
+
 function useSheets(apiKey, userId) {
     if (apiKey && userId) {
         logout();
@@ -16,37 +18,36 @@ function useSheets(apiKey, userId) {
         return
     }
     const url = getURL(apiKey)
-    const buildGet = (key, {action, actions}) =>
-        fetchCached(key, url, {userId, action, actions})
-    const buildPost = async (key, {action, actions}) =>{
+    const buildGet = (key, {action, actions}) => fetchCached(key, url, {userId, action, actions})
+    const buildPost = (key, {action, actions}) => {
         invalidate(key);
-        const response = await fetchCached(key, url, {userId, action, actions})
-        invalidate(key);
-        return response;
+        if (action || (Array.isArray(actions) && actions.length > 0)) {
+            return fetchCached(key, url, {userId, action, actions})
+        }
     }
     const buildTable = function (name, hasGet, hasAdd, hasRm) {
         let ret = {}
         ret.invalidate = () => invalidate(name)
-        const buildObject = content => {
+        const buildObject = (content, n=name) => {
             const obj = {};
-            obj[name] = content;
+            obj[n] = content;
             return obj;
         }
+        const buildPostActions = (action, props) => [...(Array.isArray(props) ? props.map( prop => buildObject(buildObject(prop, action))) : [buildObject(buildObject(props, action))]), buildObject({get: {}})]
         if (hasGet) {
             ret.get = () => buildGet(name, {action: buildObject({get: {}})})
         }
         if (hasAdd) {
-            ret.add = props => buildPost(name, {action: buildObject({add: props})})
-            ret.adds = listOfProps => buildPost(name, {actions: listOfProps.map( props => buildObject({add: props}))})
+            ret.add = props => buildPost(name, {actions: buildPostActions('add', props)})
         }
         if (hasRm) {
-            ret.rm = props => buildPost(name, {action: buildObject({rm: props})})
-            ret.rms = listOfProps => buildPost(name, {actions: listOfProps.map( props => buildObject({rm: props}))})
+            ret.rm = props => buildPost(name, {actions: buildPostActions('rm', props)})
         }
+        ret.call = operations => buildPost(name, {actions: [buildObject(operations), buildObject({get: {}})]})
         ret.error = () => storage.error.get(name)
         return ret
     }
-    const fetchAllKeys = ['attendance', 'student', 'teacher']
+    const fetchAllKeys = ['attendance', 'student', 'teacher', 'date']
     return {
         apiKey: () => storage.get('apiKey'),
         userId: () => storage.get('userId'),
@@ -55,7 +56,12 @@ function useSheets(apiKey, userId) {
         student: buildTable('student', true, false, false),
         teacher: buildTable('teacher', true, false, false),
         date: buildTable('date', true, false, false),
-        fetchAll: () => fetchCachedMany(fetchAllKeys, url, {userId, actions: fetchAllKeys.map(k => {const obj = {}; obj[k] = {get: {}}; return obj})}), 
+        fetchAll: (force = false) => {
+            const keys = force ? fetchAllKeys : fetchAllKeys.filter(k => storage.cache.get(k) === null)
+            if(keys.length > 0) {
+                fetchCachedMany(keys, url, {userId, actions: keys.map(k => {const obj = {}; obj[k] = {get: {}}; return obj})})
+            }
+        }, 
         isValidUser: async function(){
             const obj = await this.teacher.get()
             return obj && ['name', 'className', 'theme'].reduce((o,n) => o && (n in obj), true)
@@ -85,44 +91,57 @@ const logout = () => {
     }
 }
 
-const fetchCachedMany = async (keys, url, body)=>{
-    if (!keys) {
-        throw "No keys provided to fetchCached"
-    }
-    keys.forEach(invalidate);
-    try{
-        const response = await fetch(url, {method: 'POST', mode:'cors', body: JSON.stringify(body)})
-            .then(p=>p.json())
-            .catch(e => e.message)
-        response.forEach((resp,i) => {
-            (resp.success ? storage.cache.set : storage.error.set)(keys[i], resp.message)
-            return resp.message;
-        });
-    } catch(error) {
-        console.log('[fetchCachedMany] Error:', error)
-        return false;
-    }
+const fetchCachedMany = (keys, url, body)=>{
+    return new Promise(async (resolve, reject) => {
+        if (!keys) {
+            throw "No keys provided to fetchCached"
+        }
+        keys.forEach(invalidate);
+        try{
+            let response = await fetch(url, {method: 'POST', mode:'cors', body: JSON.stringify(body)})
+                .then(p=>p.json())
+                .catch(e => ({sucess: false, message: e.message}))
+            if(!Array.isArray(response)) {
+                response = [response]
+            }
+            response.forEach((resp,i) => {
+                if(resp.success) {
+                    storage.cache.set(keys[i], resp.message);
+                } else {
+                    storage.error.set(keys[i], resp.message);
+                }
+            });
+            resolve()
+        } catch(error) {
+            console.log('[fetchCachedMany] Error:', error)
+            reject(error);
+        }
+    })
 }
-const fetchCached = async (key, url, body)=>{
-    if (!key) {
-        throw "No key provided to fetchCached"
-    }
-    const previousResult = storage.cache.get(key)
-    if (previousResult) {
-        return previousResult;
-    }
-    invalidate(key);
-    try{
-        const response = await fetch(url, {method: 'POST', mode:'cors', body: JSON.stringify(body)})
-            .then(p=>p.json())
-            .catch(e => e.message)
-            .then(r => {if(r.success) return r.message; throw r.message})
-        storage.cache.set(key, response);
-        return response;
-    } catch(error) {
-        storage.error.set(key, error);
-        return false;
-    }
+const fetchCached = (key, url, body)=>{
+    return new Promise(async (resolve, reject) => {
+        if (!key) {
+            throw "No key provided to fetchCached"
+        }
+        const previousResult = storage.cache.get(key)
+        if (previousResult) {
+            resolve(previousResult);
+            return;
+        }
+        invalidate(key);
+        try{
+            const response = await fetch(url, {method: 'POST', mode:'cors', body: JSON.stringify(body)})
+                .then(p=>p.json())
+                .catch(e => e.message)
+                .then(r => {if(r.success) return r.message; throw r.message})
+            storage.cache.set(key, response);
+            resolve(response);
+        } catch(error) {
+            storage.cache.rm(key);
+            storage.error.set(key, error);
+            reject(error);
+        }
+    })
 }
 
 function Storage(moduleName){

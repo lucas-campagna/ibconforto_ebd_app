@@ -23,7 +23,8 @@ export async function loader({request}) {
   if(!sheets || !await sheets.isValidUser()){
     return redirect('/login')
   }
-  const user = await sheets.teacher.get()
+  const user = await sheets.teacher.get();
+  sheets.fetchAll();
   return user
   // const {message, status} = await sheets.isValidUser()
   // if(!status || !message){
