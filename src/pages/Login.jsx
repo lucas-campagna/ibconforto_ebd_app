@@ -51,7 +51,7 @@ export default function Login() {
         {/* <Slide in={show} direction='right' timeout={400}> */}
           <Typography my='3%' display='block' variant='p'>Olá, caro(a) professor(a)!</Typography>
         {/* </Slide> */}
-        <Typography my='3%' display='block' variant='p'>Este é um aplicativo que visa auxiliá-lo(a) no acompanhamento da presença da sua turma de EBD. Para começar, você precisa fornecer o código previamente fornecido pela organização.</Typography>
+        <Typography my='3%' display='block' variant='p'>Este aplicativo visa auxiliá-lo(a) no acompanhamento da presença da sua turma de EBD. Para começar a usá-lo você precisa fornecer o código previamente fornecido pela organização.</Typography>
       </Box>
       <Form
         method='post'
