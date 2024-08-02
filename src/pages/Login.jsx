@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useState, useRef} from 'react'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
@@ -19,9 +19,10 @@ const loadingDialogStates = {
 
 export default function Login() {
   const submit = useSubmit();
-  const code = useLoaderData()
+  const {code} = useLoaderData()
   const stateFromAction = useActionData() || 'idle';
   const [state, setState] = useState(stateFromAction);
+  const formRef = useRef()
   // if(loadingDialogStates[stateFromAction].level > loadingDialogStates[state].level) setState(stateFromAction)
   const [inputCode, setInputCode] = useState(code);
   // const navigate = useNavigate();
@@ -29,6 +30,12 @@ export default function Login() {
     if(stateFromAction != state)
       setState(stateFromAction)
   },[stateFromAction]);
+  useEffect(()=>{
+    if(code) {
+      // console.log(formRef.current)
+      // submit(formRef.current)
+    }
+  }, [])
   return (
     <Container
       maxWidth="sm"
@@ -44,7 +51,7 @@ export default function Login() {
         {/* <Slide in={show} direction='right' timeout={400}> */}
           <Typography my='3%' display='block' variant='p'>Olá, caro(a) professor(a)!</Typography>
         {/* </Slide> */}
-        <Typography my='3%' display='block' variant='p'>Este é um aplicativo para visa auxiliá-lo(a) no acompanhamento da presença da sua turma de EBD. Para começar, você precisa fornecer o código que lhe fora previamente fornecido</Typography>
+        <Typography my='3%' display='block' variant='p'>Este aplicativo visa auxiliá-lo(a) no acompanhamento da presença da sua turma de EBD. Para começar a usá-lo você precisa fornecer o código previamente fornecido pela organização.</Typography>
       </Box>
       <Form
         method='post'
@@ -52,6 +59,7 @@ export default function Login() {
           setState('logging')
           submit(e.currentTarget)
         }}
+        ref={formRef}
       >
         <Stack
           flexDirection='column'
@@ -79,21 +87,31 @@ export default function Login() {
   )
 }
 
-export function loginLoader({request}){
+export async function loginLoader({request}){
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const sheets = useSheets()
-  return sheets ? redirect('/') : code
+  if (code) {
+    if (sheets) {
+      sheets.logout()
+    }
+    return {code}
+  }
+  if (sheets && await sheets.isValidUser()) {
+    return redirect('/')
+  }
+  return {}
 }
 
 export async function loginAction({request}){
   const formData = await request.formData()
   try{
     const code = formData.get('code')
-    const [apiKey, userId] = code.split('.')
-    const sheets = await useSheets(apiKey, userId)
+    const [apiKey, ...userIds] = code.split('.')
+    const sheets = useSheets(apiKey, userIds[0])
     if(!sheets)
       return 'loginError'
+    userIds.forEach(userId => sheets.addUserId(userId))
   }
   catch{
     return 'idle'

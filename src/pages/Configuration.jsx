@@ -52,10 +52,10 @@ export default function Configuration() {
           readOnly: true,
         }}
       />
-        <Button>
+        <Button disabled={true}>
           <Stack
             direction='row'
-            color='blue'
+            // color='blue'
             spacing={1}
             >
               <ShareIcon/>
@@ -92,9 +92,9 @@ export default function Configuration() {
 
 export async function loader(){
   const sheets = useSheets()
-  const {message: {name, id: userId, group: className, theme}} = await sheets.getUserInfo()
+  const {name, className, theme} = await sheets.teacher.get()
   return {
-    code: `${sheets.apiKey}.${sheets.userId}`,
+    code: `${sheets.apiKey()}.${sheets.userId()}`,
     name,
     className,
     theme
