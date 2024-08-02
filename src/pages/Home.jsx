@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react'
+import React, { useMemo, useState, useEffect, useReducer, useCallback } from 'react'
 import { useLoaderData, useLocation, useNavigate, useRevalidator } from 'react-router'
 import { useSearchParams, redirect } from 'react-router-dom'
 import Stack from '@mui/material/Stack'
@@ -6,8 +6,17 @@ import Fab from '@mui/material/Fab'
 import Typography from '@mui/material/Typography'
 import SaveIcon from '@mui/icons-material/Save';
 import SyncIcon from '@mui/icons-material/Sync';
-import Grow from '@mui/material/Grow';
+import AddIcon from '@mui/icons-material/Add';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
+import SpeakerNotesIcon from '@mui/icons-material/SpeakerNotes';
+import Dialog from '@mui/material/Dialog'
 import Slide from '@mui/material/Slide';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+
 
 import useSheets from '../hooks/sheets'
 
@@ -15,6 +24,9 @@ import LoadingDialog from '../components/LoadingDialog'
 import HomeFooter from '../components/HomeFooter'
 import SlideTransition from '../components/SlideTransition'
 import AttendanceList from '../components/AttendanceList'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
+import { DialogActions } from '@mui/material'
 
 export default function Home() {
   const location = useLocation()
@@ -31,6 +43,7 @@ export default function Home() {
   const [currentDate, setCurrentDate] = useState(currentDateFromParams in validDates ? currentDateFromParams : validDates.at(-1))
   const [lastDate, setLastDate] = useState(currentDate)
   const [currentAttendanceList, setCurrentAttendanceList] = useState(historyFromServer[currentDate])
+  const [showRequestDialog, setShowRequestDialog] = useState(false)
   
   const {next, prev} = useMemo(()=>{
     const prev = validDates.filter(d=>d < currentDate).at(-1)
@@ -74,6 +87,18 @@ export default function Home() {
     revalidator.revalidate()
   }
 
+  async function handleOnRequest(){
+    setButtonSaveVisible(false)
+    setButtonSyncVisible(false)
+    setShowRequestDialog(true)
+  }
+
+  function handleOnCloseRequestDialog(){
+    setShowRequestDialog(false)
+    setButtonSaveVisible(false)
+    setButtonSyncVisible(true)
+  }
+
   function handleOnChangeAttendanceList(newList){
     const hasChanged = JSON.stringify(newList) != JSON.stringify(historyFromServer[lastDate])
     setButtonSaveVisible(hasChanged)
@@ -115,12 +140,13 @@ export default function Home() {
           from={HistoryListLastDate}
           to={HistoryListCurrentDate}
           onStart={()=>{
-            setButtonSaveVisible(false)
-            setButtonSyncVisible(false)
+            // setButtonSaveVisible(false)
+            // setButtonSyncVisible(false)
           }}
           onFinished={()=>{
             setLastDate(currentDate);
             navigate(`?date=${currentDate}`)
+            setButtonSaveVisible(false)
             setButtonSyncVisible(true)
           }}
         />
@@ -133,7 +159,8 @@ export default function Home() {
         onNextClick={()=>handleChangeCurrentDate(next)}
       />
       <Stack
-        direction='row'
+        direction='column'
+        alignItems={'end'}
         spacing={1}
         sx={{
           position:'fixed',
@@ -142,10 +169,16 @@ export default function Home() {
           zIndex:3,
         }}
       >
-        {buttonSaveVisible ? <ButtonSave visible={buttonSaveVisible} onClick={handleOnSave}/>:<></>}
-        {buttonSyncVisible ? <ButtonSync visible={buttonSyncVisible} onClick={handleOnSync}/>:<></>}
+        <ButtonRequest visible={buttonSyncVisible} onClick={handleOnRequest}/>
+        <ButtonSync visible={buttonSyncVisible} onClick={handleOnSync}/>
+        <ButtonSave visible={buttonSaveVisible} onClick={handleOnSave}/>
+        {/* {buttonSaveVisible ? :<></>} */}
+        {/* {buttonSyncVisible ? (<>
+          </>
+        ):<></>} */}
       </Stack>
       <LoadingDialog message={dialogMessage}/>
+      <RequestDialog visible={showRequestDialog} onClose={handleOnCloseRequestDialog}/>
     </Stack>
   )
 }
@@ -175,7 +208,11 @@ export async function homeLoader() {
           await sheets.attendance.get()
         }
       },
-      invalidateCache: sheets.attendance.invalidate,
+      invalidateCache: () => {
+        sheets.attendance.invalidate();
+        sheets.date.invalidate();
+        sheets.student.invalidate();
+      },
     }
   }
   sheets.logout()
@@ -212,10 +249,209 @@ const ButtonSync = ({visible, ...props})=>(
       {...props}
     >
       <SyncIcon/>
-      {/* <Typography sx={{ml:1}}>Salvar</Typography> */}
     </Fab>
   </Slide>
 )
+
+const ButtonRequest = ({visible, ...props}) => {
+  const innerVisible = useDelay({value: visible, delay: 75, onEnter: true, onExit: true});
+  return (
+  <Slide
+    in={innerVisible}
+    direction='left'
+  >
+    <Fab
+      variant="extended"
+      size="medium"
+      color="secondary"
+      sx={{width:0}}
+      {...props}
+      >
+      <AddIcon/>
+    </Fab>
+  </Slide>
+)}
+
+const useDelay = ({value, delay, onEnter, onExit}) => {
+  onEnter = onEnter || false;
+  onExit = onExit || false;
+  const [innerVisible, setVisible] = useState(value);
+  const setDelayed = ()=>setTimeout(()=>setVisible(value), delay)
+  useEffect(()=>{
+    if(innerVisible){
+      if(onExit) setDelayed()
+      else setVisible(value)
+    } else {
+      if(onEnter) setDelayed()
+      else setVisible(value)
+    }
+  },[value])
+  return innerVisible
+}
+
+const RequestDialog = ({visible, onClose, ...props}) => {
+  const defaultNewStudent = {name: '', phone: '', formatedPhone: '', isValidPhoneNumber: false, isValidStudentName: true}
+  const [open, setOpen] = useState(visible);
+  const [screen, setScreen] = useReducer((current, action) => action, 'home')
+  const [newStudent, setNewStudent] = useState(defaultNewStudent)
+  const [studentToRemove, setStudentToRemove] = useState('')
+  const [students, setStudents] = useState([])
+  const [note, setNote] = useState('')
+  const sheets = useSheets();
+  newStudent.isValidStudentName = useMemo(()=>!students.includes(newStudent.name.toLocaleLowerCase()), [students, newStudent.name])
+  useEffect(()=>{
+    sheets.student.get()
+      .then(students => setStudents(students.map(({name}) => name.toLocaleLowerCase())))
+  },[])
+  useEffect(()=>{
+    setOpen(visible)
+  },[visible])
+  useEffect(()=>{
+    if(!open){
+      setNewStudent(defaultNewStudent)
+      setStudentToRemove('')
+      setNote('')
+      onClose()
+      setTimeout(()=>setScreen('home'), 200)
+    }
+  }, [open])
+
+  function handlePhoneInput(phone) {
+    phone = phone.replaceAll(/[^0-9]/g,'').slice(0,11)
+    let formatedPhone = phone
+    if(phone.length > 2){
+      if(phone.length > 10){
+        formatedPhone = `(${phone.slice(0,2)}) ${phone.slice(2,6)}-${phone.slice(6)}`
+      } else {
+        formatedPhone = `(${phone.slice(0,2)}) ${phone.slice(2,5)}-${phone.slice(5)}`
+      }
+    }
+    if(phone.length < 6) {
+      formatedPhone = formatedPhone.replace('-','')
+    }
+    const isValidPhoneNumber = phone.length > 9
+    setNewStudent({ ...newStudent, phone, formatedPhone, isValidPhoneNumber })
+  }
+
+  function handleAddStudent() {
+    async function fetchData(){
+      const {className} = await sheets.teacher.get()
+      sheets.requisition.add({description: `Adicionar aluno ${newStudent.name} (telefone: ${newStudent.formatedPhone}) na classe ${className}`})
+      setOpen(false)
+    }
+    fetchData();
+  }
+  
+  function handleRemoveStudent() {
+    async function fetchData(){
+      const {className} = await sheets.teacher.get()
+      sheets.requisition.add({description: `Remover aluno ${studentToRemove} da classe ${className}`})
+      setOpen(false)
+    }
+    fetchData();
+  }
+
+  function handleAddNote() {
+    sheets.requisition.add({description: `Pedido do professor: ${note}`})
+    setOpen(false)
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={()=>{
+        onClose()
+        setOpen(false)
+      }}
+      {...props}
+    >
+      <DialogContent>
+        {{
+          home: <>
+            <DialogTitle>
+            Fazer um pedido
+            </DialogTitle>
+            <Stack direction='column' spacing={2} justifyContent='space-evenly' alignItems='stretch'>
+              <Button variant='contained' color='primary' startIcon={<PersonAddIcon/>} onClick={()=>setScreen('addStudent')}>
+              Adicionar Aluno
+              </Button>
+              <Button variant='contained' color='primary' startIcon={<PersonRemoveIcon/>} onClick={()=>setScreen('rmStudent')}>
+              Remover Aluno
+              </Button>
+              <Button variant='contained' color='primary' startIcon={<SpeakerNotesIcon/>} onClick={()=>setScreen('note')}>
+              Outro Assunto
+              </Button>
+            </Stack>
+          </>,
+          addStudent: <>
+            <DialogTitle>Dados do novo aluno</DialogTitle>
+            <Stack direction='column' spacing={2}>
+              <TextField
+                label={newStudent.isValidStudentName ? 'Nome' : "Nome repetido!"}
+                value={newStudent.name}
+                variant='outlined'
+                color={newStudent.isValidStudentName ? 'primary' : 'error'}
+                onChange={(e)=>setNewStudent({...newStudent, name: e.target.value})}
+                />
+              <TextField
+                label='Telefone'
+                color={newStudent.isValidPhoneNumber ? 'primary' : 'error'}
+                value={newStudent.formatedPhone}
+                variant='outlined'
+                fullWidth
+                onChange={e=>handlePhoneInput(e.target.value)}
+              />
+            </Stack>
+            <DialogActions>
+              <Button
+                disabled={!newStudent.isValidPhoneNumber || newStudent.name.length < 3 || !newStudent.isValidStudentName}
+                onClick={handleAddStudent}
+              >Ok</Button>
+            </DialogActions>
+          </>,
+          rmStudent: <>
+            <DialogTitle>Remover aluno</DialogTitle>
+            <Select
+              fullWidth
+              value={studentToRemove}
+              onChange={e=>setStudentToRemove(e.target.value)}
+            >
+              {students.map(name => (
+                <MenuItem key={name} value={name}>{name}</MenuItem>
+              ))}
+            </Select>
+            <DialogActions>
+              <Button
+                disabled={studentToRemove.length === 0}
+                onClick={handleRemoveStudent}
+              >Ok</Button>
+            </DialogActions>
+          </>,
+          note: <>
+            <DialogTitle>Pedido</DialogTitle>
+            <Stack direction='column' spacing={2}>
+              <TextField
+                value={note}
+                variant='outlined'
+                multiline
+                minRows={4}
+                maxRows={4}
+                fullWidth
+                onChange={(e)=>setNote(e.target.value)}
+              />
+            </Stack>
+            <DialogActions>
+              <Button
+                disabled={note.length === 0}
+                onClick={handleAddNote}
+              >Ok</Button>
+            </DialogActions>
+          </>,
+        }[screen]}
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 const dateToLocal = date => {
   try {

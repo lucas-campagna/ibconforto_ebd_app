@@ -15,7 +15,7 @@ export default function HomeFooter({prev, next, current, onPrevClick, onNextClic
             justifyContent='center'
             sx={{
                 boxShadow: 'rgba(0, 0, 0, 0.1) 0px -1px 2px 0px',
-                position:'absolute',
+                position:'fixed',
                 bottom:0,
                 width:'100vw',
                 height: 48,

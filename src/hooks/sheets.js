@@ -55,7 +55,7 @@ function useSheets(apiKey, userId) {
         teacher: buildTable('teacher', true, false, false),
         date: buildTable('date', true, false, false),
         fetchAll: (force = false) => {
-            const keys = force ? fetchAllKeys : fetchAllKeys.filter(k => storage.cache.get(k) === null)
+            const keys = force ? fetchAllKeys : fetchAllKeys.filter(k => !storage.cache.has(k))
             if(keys.length > 0) {
                 fetchCachedMany(keys, url, {userId, actions: keys.map(k => {const obj = {}; obj[k] = {get: {}}; return obj})})
             }
@@ -150,6 +150,7 @@ function Storage(moduleName){
     this.get = key => {if(!key) return iterateThrough((k,i) => this.get(k)); const v = storageType.getItem(_getKey(key)); try{return JSON.parse(v)} catch {return v}};
     this.set = (key, item) => storageType.setItem(_getKey(key), JSON.stringify(item));
     this.rm = key => storageType.removeItem(_getKey(key));
+    this.has = key => storageType.getItem(_getKey(key)) !== null
     this.clear = key => {
         key = _getKey(key);
         iterateThrough(k => k.startsWith(key) ? storageType.removeItem(k) : null)

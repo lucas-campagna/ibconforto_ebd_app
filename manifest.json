@@ -5,9 +5,9 @@
     "background_color": "#FFFFFF",
     "display": "standalone",
     "orientation": "portrait",
-    "start_url": "",
+    "start_url": "/apps/ibcebd/",
     "id": "v1.0.0",
-    "scope": "/apps/ibcebd",
+    "scope": "/apps/ibcebd/",
     "screenshots" : [
       {
         "src": "imgs/ibcebd.png",

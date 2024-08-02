@@ -3,7 +3,7 @@ import Dialog from '@mui/material/Dialog'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import CircularProgress from '@mui/material/CircularProgress';
-import { Button } from '@mui/material';
+import Button from '@mui/material/Button';
 
 export default function LoadingDialog({message, loading, onClick}) {
   loading = loading === undefined ? true : loading
